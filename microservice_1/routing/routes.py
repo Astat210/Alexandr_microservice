@@ -7,7 +7,7 @@ from connection.postgres import get_db
 
 router = APIRouter()
 
-@router.post("/films", response_model=FilmCreate)
+@router.post("/films/api", response_model=FilmCreate)
 def create_new_film(film: FilmCreate, db: Session = Depends(get_db)):
     return create_film(db, film)
 
