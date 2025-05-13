@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Films Filter</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <h1>Add a Film</h1>
+    <form method="post" action="/films" enctype="multipart/form-data">
+        <label>Название: <input type="text" name="title" required></label><br>
+        <label>Genre: <input type="text" name="genre" required></label><br>
+        <label>Год: <input type="number" name="year" required></label><br>
+        <label>Рейтинг: <input type="number" step="0.1" name="rating" required></label><br>
+        <label>Описание: <input type="text" name="description"></label><br>
+        <button type="submit">Добавить фильм</button>
+    </form>
+
+
+    <h1>Filter Films</h1>
+    <form method="get" action="/films">
+        <label>ID: <input type="number" name="id"></label><br>
+        <label>Название: <input type="text" name="title"></label><br>
+        <label>Жанр: <input type="text" name="genre"></label><br>
+        <label>Год: <input type="number" name="year"></label><br>
+        <label>Рейтинг (от мин рейтинг): <input type="number" step="0.1" name="rating_min"></label><br>
+        <label>Описание: <input type="text" name="description"></label><br>
+        <button type="submit">Фильтр</button>
+    </form>
+
+    <h2>Films</h2>
+    {% if films %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Genre</th>
+                <th>Year</th>
+                <th>Rating</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for film in films %}
+            <tr>
+                <td>{{ film.id }}</td>
+                <td>{{ film.title }}</td>
+                <td>{{ film.genre }}</td>
+                <td>{{ film.year }}</td>
+                <td>{{ film.rating }}</td>
+                <td>{{ film.description }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No films found.</p>
+    {% endif %}
+</body>
+</html>
