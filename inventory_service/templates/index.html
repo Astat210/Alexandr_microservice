@@ -1,63 +1,105 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Films Filter</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>Управление складом и продажами</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Управление складом и продажами</h1>
 
-    <h1>Добавить фильм</h1>
-    <form method="post" action="/films" enctype="multipart/form-data">
-        <label>Название: <input type="text" name="title" required></label><br>
-        <label>Жанр: <input type="text" name="genre" required></label><br>
-        <label>Год: <input type="number" name="year" required></label><br>
-        <label>Рейтинг: <input type="number" step="0.1" name="rating" required></label><br>
-        <label>Описание: <input type="text" name="description"></label><br>
-        <button type="submit">Добавить фильм</button>
-    </form>
+        <!-- Форма для добавления товара -->
+        <h3>Добавить товар</h3>
+        <form action="/stock/create" method="post" class="mb-4">
+            <div class="mb-3">
+                <label for="product_id" class="form-label">ID товара</label>
+                <input type="text" class="form-control" id="product_id" name="product_id" required>
+            </div>
+            <div class="mb-3">
+                <label for="product_name" class="form-label">Название товара</label>
+                <input type="text" class="form-control" id="product_name" name="product_name" required>
+            </div>
+            <div class="mb-3">
+                <label for="quantity" class="form-label">Количество</label>
+                <input type="number" class="form-control" id="quantity" name="quantity" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Добавить</button>
+        </form>
 
+        <!-- Форма для фильтрации -->
+        <h3>Фильтрация отчёта</h3>
+        <form action="/stock/report" method="get" class="mb-4">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="start_date" class="form-label">Дата начала</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="end_date" class="form-label">Дата окончания</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="page_size" class="form-label">Записей на странице</label>
+                    <select class="form-control" id="page_size" name="page_size">
+                        <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+                        <option value="20" {% if page_size == 20 %}selected{% endif %}>20</option>
+                        <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Применить фильтр</button>
+        </form>
 
-    <h1>Фильтр</h1>
-    <form method="get" action="/films">
-        <label>ID: <input type="number" name="id"></label><br>
-        <label>Название: <input type="text" name="title"></label><br>
-        <label>Жанр: <input type="text" name="genre"></label><br>
-        <label>Год: <input type="number" name="year"></label><br>
-        <label>Рейтинг (от мин рейтинг): <input type="number" step="0.1" name="rating_min"></label><br>
-        <label>Описание: <input type="text" name="description"></label><br>
-        <button type="submit">Фильтр</button>
-    </form>
+        <!-- Таблица с данными -->
+        <h3>Отчёт по складу и продажам</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID товара</th>
+                    <th>Название товара</th>
+                    <th>Остаток</th>
+                    <th>Продано</th>
+                    <th>Выручка</th>
+                    <th>Дата продажи</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                <tr>
+                    <td>{{ item.product_id }}</td>
+                    <td>{{ item.product_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.quantity_sold }}</td>
+                    <td>{{ item.revenue }}</td>
+                    <td>{{ item.sale_date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-    <h2>Все фильмы</h2>
-    {% if films %}
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Название</th>
-                <th>Жанр</th>
-                <th>Год</th>
-                <th>Рейтинг</th>
-                <th>Описание</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for film in films %}
-            <tr>
-                <td>{{ film.id }}</td>
-                <td>{{ film.title }}</td>
-                <td>{{ film.genre }}</td>
-                <td>{{ film.year }}</td>
-                <td>{{ film.rating }}</td>
-                <td>{{ film.description }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>No films found.</p>
-    {% endif %}
+        <!-- Пагинация -->
+        <nav aria-label="Пагинация">
+            <ul class="pagination">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="/stock/report?page={{ page - 1 }}&page_size={{ page_size }}&start_date={{ start_date }}&end_date={{ end_date }}">Предыдущая</a>
+                </li>
+                {% endif %}
+                {% set total_pages = (total / page_size) | int + (1 if total % page_size else 0) %}
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="/stock/report?page={{ p }}&page_size={{ page_size }}&start_date={{ start_date }}&end_date={{ end_date }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                {% if page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="/stock/report?page={{ page + 1 }}&page_size={{ page_size }}&start_date={{ start_date }}&end_date={{ end_date }}">Следующая</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

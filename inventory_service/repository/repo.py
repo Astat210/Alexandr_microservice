@@ -37,7 +37,7 @@ class PostgresRepository:
             self.db.rollback()
             raise
 
-    def get_stock_report(self, start_date: str = None, end_date: str = None):
+    def get_stock_report(self, start_date: str = None, end_date: str = None, page: int = 1, page_size: int = 10):
         try:
             query = self.db.query(Stock.product_id, Stock.product_name, Stock.quantity,
                                  Sales.quantity_sold, Sales.revenue, Sales.sale_date)\
@@ -46,11 +46,12 @@ class PostgresRepository:
                 query = query.filter(Sales.sale_date >= datetime.strptime(start_date, '%Y-%m-%d'))
             if end_date:
                 query = query.filter(Sales.sale_date <= datetime.strptime(end_date, '%Y-%m-%d'))
-            results = query.all()
+            total = query.count()
+            results = query.offset((page - 1) * page_size).limit(page_size).all()
             df = pd.DataFrame(results, columns=['product_id', 'product_name', 'quantity', 'quantity_sold', 'revenue', 'sale_date'])
             df.to_excel('stock_report.xlsx', index=False, encoding='utf-8')
-            logging.info("Generated stock report")
-            return df.to_dict(orient='records')
+            logging.info(f"Generated paginated stock report, page {page}, size {page_size}")
+            return {"data": df.to_dict(orient='records'), "total": total, "page": page, "page_size": page_size}
         except Exception as e:
             logging.error(f"Error generating stock report: {str(e)}")
             raise
@@ -64,4 +65,38 @@ class PostgresRepository:
             return stock
         except SQLAlchemyError as e:
             logging.error(f"Error retrieving stock: {str(e)}")
+            raise
+
+    def load_excel_data(self, file_path: str):
+        try:
+            # Чтение Excel-файла
+            stock_df = pd.read_excel(file_path, sheet_name='Stock')
+            sales_df = pd.read_excel(file_path, sheet_name='Sales')
+
+            # Загрузка данных в таблицу stock
+            for _, row in stock_df.iterrows():
+                stock = Stock(
+                    product_id=str(row['product_id']),
+                    product_name=str(row['product_name']),
+                    quantity=int(row['quantity']),
+                    last_updated=pd.to_datetime(row['last_updated'])
+                )
+                self.db.add(stock)
+
+            # Загрузка данных в таблицу sales
+            for _, row in sales_df.iterrows():
+                sale = Sales(
+                    product_id=str(row['product_id']),
+                    quantity_sold=int(row['quantity_sold']),
+                    sale_date=pd.to_datetime(row['sale_date']),
+                    revenue=float(row['revenue'])
+                )
+                self.db.add(sale)
+
+            self.db.commit()
+            logging.info(f"Loaded data from {file_path} into database")
+            return {"message": "Excel data loaded successfully"}
+        except Exception as e:
+            logging.error(f"Error loading Excel data: {str(e)}")
+            self.db.rollback()
             raise
