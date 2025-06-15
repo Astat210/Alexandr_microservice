@@ -1,36 +1,24 @@
-from sqlalchemy import Column, Integer, Text, Float
+from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from pydantic import BaseModel
+import datetime
 
 Base = declarative_base()
 
-class Film(Base):
-    __tablename__ = "films"
+class Stock(Base):
+    __tablename__ = "stock"
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(Text, nullable=False)
-    genre = Column(Text, nullable=False)
-    year = Column(Integer, nullable=False)
-    rating = Column(Float, nullable=False)
-    description = Column(Text, nullable=True)
+    product_id = Column(String(50), unique=True, nullable=False)
+    product_name = Column(String(100), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    last_updated = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    sales = relationship("Sales", back_populates="stock")
 
-class FilmCreate(BaseModel):
-    title: str
-    genre: str
-    year: int
-    rating: float
-    description: str | None = None
-
-class FilmUpdate(BaseModel):
-    title: str | None = None
-    genre: str | None = None
-    year: int | None = None
-    rating: float | None = None
-    description: str | None = None
-
-class FilmFilter(BaseModel):
-    id: int | None = None
-    title: str | None = None
-    genre: str | None = None
-    year: int | None = None
-    rating_min: float | None = None
-    description: str | None = None
+class Sales(Base):
+    __tablename__ = "sales"
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(String(50), ForeignKey("stock.product_id"), nullable=False)
+    quantity_sold = Column(Integer, nullable=False)
+    sale_date = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    revenue = Column(Float, nullable=False)
+    stock = relationship("Stock", back_populates="sales")
