@@ -1,10 +1,10 @@
 
 services:
-  microservice_1:
+  inventory_service:
     build:
-      context: ./microservice_1
+      context: ./inventory_service
       dockerfile: Dockerfile
-    container_name: microservice_1
+    container_name: inventory_service
     ports:
       - "8001:8001"
     env_file:
@@ -21,7 +21,7 @@ services:
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: films_db
+      POSTGRES_DB: inventory
     ports:
       - "5432:5432"
     volumes:
