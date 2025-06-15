@@ -85,3 +85,13 @@ class RestockItem(Base):
     unit_cost = Column(Float, nullable=False)
     restock = relationship("Restock", back_populates="items")
     product = relationship("Product", back_populates="restock_items")
+
+class InventoryItem(Base):
+    __tablename__ = "inventory_items"
+
+    inventory_id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.product_id"), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    last_updated = Column(DateTime, nullable=False)
+
+    product = relationship("Product", back_populates="inventory_items")
