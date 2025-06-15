@@ -1,47 +1,67 @@
 from sqlalchemy.orm import Session
-from models.model import Film
+from models.models import Stock, Sales
+from sqlalchemy.exc import SQLAlchemyError
+import pandas as pd
+import logging
+from datetime import datetime
 
+logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def create_film(db: Session, film: "FilmCreate"):
-    db_film = Film(**film.dict())
-    db.add(db_film)
-    db.commit()
-    db.refresh(db_film)
-    return db_film
+class PostgresRepository:
+    def __init__(self, db: Session):
+        self.db = db
 
-def get_film(db: Session, film_id: int):
-    return db.query(Film).filter(Film.id == film_id).first()
+    def create_stock(self, product_id: str, product_name: str, quantity: int):
+        try:
+            stock = Stock(product_id=product_id, product_name=product_name, quantity=quantity)
+            self.db.add(stock)
+            self.db.commit()
+            self.db.refresh(stock)
+            logging.info(f"Created stock item: {product_id}")
+            return stock
+        except SQLAlchemyError as e:
+            logging.error(f"Error creating stock: {str(e)}")
+            self.db.rollback()
+            raise
 
-def update_film(db: Session, film_id: int, film: "FilmUpdate"):
-    db_film = db.query(Film).filter(Film.id == film_id).first()
-    if db_film is None:
-        return None
-    for key, value in film.dict(exclude_none=True).items():
-        setattr(db_film, key, value)
-    db.commit()
-    db.refresh(db_film)
-    return db_film
+    def create_sale(self, product_id: str, quantity_sold: int, revenue: float):
+        try:
+            sale = Sales(product_id=product_id, quantity_sold=quantity_sold, revenue=revenue)
+            self.db.add(sale)
+            self.db.commit()
+            self.db.refresh(sale)
+            logging.info(f"Created sale for product: {product_id}")
+            return sale
+        except SQLAlchemyError as e:
+            logging.error(f"Error creating sale: {str(e)}")
+            self.db.rollback()
+            raise
 
-def delete_film(db: Session, film_id: int):
-    db_film = db.query(Film).filter(Film.id == film_id).first()
-    if db_film is None:
-        return None
-    db.delete(db_film)
-    db.commit()
-    return db_film
+    def get_stock_report(self, start_date: str = None, end_date: str = None):
+        try:
+            query = self.db.query(Stock.product_id, Stock.product_name, Stock.quantity,
+                                 Sales.quantity_sold, Sales.revenue, Sales.sale_date)\
+                .join(Sales, Stock.product_id == Sales.product_id)
+            if start_date:
+                query = query.filter(Sales.sale_date >= datetime.strptime(start_date, '%Y-%m-%d'))
+            if end_date:
+                query = query.filter(Sales.sale_date <= datetime.strptime(end_date, '%Y-%m-%d'))
+            results = query.all()
+            df = pd.DataFrame(results, columns=['product_id', 'product_name', 'quantity', 'quantity_sold', 'revenue', 'sale_date'])
+            df.to_excel('stock_report.xlsx', index=False, encoding='utf-8')
+            logging.info("Generated stock report")
+            return df.to_dict(orient='records')
+        except Exception as e:
+            logging.error(f"Error generating stock report: {str(e)}")
+            raise
 
-def get_films(db: Session, filters: dict):
-    query = db.query(Film)
-    if filters.get("id"):
-        query = query.filter(Film.id == filters["id"])
-    if filters.get("title"):
-        query = query.filter(Film.title.ilike(f"%{filters['title']}%"))
-    if filters.get("genre"):
-        query = query.filter(Film.genre.ilike(f"%{filters['genre']}%"))
-    if filters.get("year"):
-        query = query.filter(Film.year == filters["year"])
-    if filters.get("rating_min"):
-        query = query.filter(Film.rating >= filters["rating_min"])
-    if filters.get("description"):
-        query = query.filter(Film.description.ilike(f"%{filters['description']}%"))
-    return query.all()
+    def get_stock_by_id(self, product_id: str):
+        try:
+            stock = self.db.query(Stock).filter(Stock.product_id == product_id).first()
+            if not stock:
+                logging.warning(f"Stock not found: {product_id}")
+                return None
+            return stock
+        except SQLAlchemyError as e:
+            logging.error(f"Error retrieving stock: {str(e)}")
+            raise
