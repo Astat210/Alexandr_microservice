@@ -14,14 +14,14 @@
         <form action="/stock/create" method="post" class="mb-4">
             <div class="mb-3">
                 <label for="product_id" class="form-label">ID товара</label>
-                <input type="text" class="form-control" id="product_id" name="product_id" required>
+                <input type="number" class="form-control" id="product_id" name="product_id" required>
             </div>
             <div class="mb-3">
-                <label for="product_name" class="form-label">Название товара</label>
-                <input type="text" class="form-control" id="product_name" name="product_name" required>
+                <label for="name" class="form-label">Название товара</label>
+                <input type="text" class="form-control" id="name" name="name" required>
             </div>
             <div class="mb-3">
-                <label for="category_id" class="form-label">Категория</label>
+                <label for="category_id" class="form-label">ID категории</label>
                 <input type="number" class="form-control" id="category_id" name="category_id" required>
             </div>
             <div class="mb-3">
@@ -48,8 +48,8 @@
                     <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
                 </div>
                 <div class="col-md-3 mb-3">
-                    <label for="category_id" class="form-label">Категория</label>
-                    <input type="number" class="form-control" id="category_id" name="category_id">
+                    <label for="category_id" class="form-label">ID категории</label>
+                    <input type="number" class="form-control" id="category_id" name="category_id" value="{{ category_id }}">
                 </div>
                 <div class="col-md-3 mb-3">
                     <label for="page_size" class="form-label">Записей на странице</label>

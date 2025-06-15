@@ -13,30 +13,30 @@ templates = Jinja2Templates(directory="templates")
 logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 @router.post("/stock/create")
-async def create_stock(product_id: str, product_name: str, quantity: int, db: Session = Depends(get_db)):
+async def create_stock(product_id: int, name: str, category_id: int, price: float, unit: str, db: Session = Depends(get_db)):
     try:
         repo = PostgresRepository(db)
-        stock = repo.create_stock(product_id, product_name, quantity)
-        return {"message": "Товар добавлен", "data": stock}
+        product = repo.create_product(product_id, name, category_id, price, unit)
+        return {"message": "Товар добавлен", "data": product}
     except Exception as e:
         logging.error(f"Error in create_stock: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/sales/create")
-async def create_sale(product_id: str, quantity_sold: int, revenue: float, db: Session = Depends(get_db)):
+async def create_sale(customer_id: int, purchase_date: str, total_amount: float, db: Session = Depends(get_db)):
     try:
         repo = PostgresRepository(db)
-        sale = repo.create_sale(product_id, quantity_sold, revenue)
+        sale = repo.create_purchase(customer_id, purchase_date, total_amount)
         return {"message": "Продажа добавлена", "data": sale}
     except Exception as e:
         logging.error(f"Error in create_sale: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/stock/report", response_class=HTMLResponse)
-async def get_stock_report(request: Request, start_date: str = None, end_date: str = None, page: int = 1, page_size: int = 10, db: Session = Depends(get_db)):
+async def get_stock_report(request: Request, start_date: str = None, end_date: str = None, category_id: int = None, page: int = 1, page_size: int = 10, db: Session = Depends(get_db)):
     try:
         repo = PostgresRepository(db)
-        report = repo.get_stock_report(start_date, end_date, page, page_size)
+        report = repo.get_stock_report(start_date, end_date, category_id, page, page_size)
         return templates.TemplateResponse("index.html", {
             "request": request,
             "data": report["data"],
@@ -44,7 +44,8 @@ async def get_stock_report(request: Request, start_date: str = None, end_date: s
             "page": report["page"],
             "page_size": report["page_size"],
             "start_date": start_date or "",
-            "end_date": end_date or ""
+            "end_date": end_date or "",
+            "category_id": category_id or ""
         })
     except Exception as e:
         logging.error(f"Error in get_stock_report: {str(e)}")
