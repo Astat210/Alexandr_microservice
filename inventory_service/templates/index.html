@@ -21,8 +21,16 @@
                 <input type="text" class="form-control" id="product_name" name="product_name" required>
             </div>
             <div class="mb-3">
-                <label for="quantity" class="form-label">Количество</label>
-                <input type="number" class="form-control" id="quantity" name="quantity" required>
+                <label for="category_id" class="form-label">Категория</label>
+                <input type="number" class="form-control" id="category_id" name="category_id" required>
+            </div>
+            <div class="mb-3">
+                <label for="price" class="form-label">Цена</label>
+                <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+            </div>
+            <div class="mb-3">
+                <label for="unit" class="form-label">Единица измерения</label>
+                <input type="text" class="form-control" id="unit" name="unit" required>
             </div>
             <button type="submit" class="btn btn-primary">Добавить</button>
         </form>
@@ -31,15 +39,19 @@
         <h3>Фильтрация отчёта</h3>
         <form action="/stock/report" method="get" class="mb-4">
             <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label for="start_date" class="form-label">Дата начала</label>
                     <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label for="end_date" class="form-label">Дата окончания</label>
                     <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
+                    <label for="category_id" class="form-label">Категория</label>
+                    <input type="number" class="form-control" id="category_id" name="category_id">
+                </div>
+                <div class="col-md-3 mb-3">
                     <label for="page_size" class="form-label">Записей на странице</label>
                     <select class="form-control" id="page_size" name="page_size">
                         <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
@@ -58,10 +70,11 @@
                 <tr>
                     <th>ID товара</th>
                     <th>Название товара</th>
+                    <th>Категория</th>
                     <th>Остаток</th>
                     <th>Продано</th>
                     <th>Выручка</th>
-                    <th>Дата продажи</th>
+                    <th>Дата покупки</th>
                 </tr>
             </thead>
             <tbody>
@@ -69,10 +82,11 @@
                 <tr>
                     <td>{{ item.product_id }}</td>
                     <td>{{ item.product_name }}</td>
+                    <td>{{ item.category_name }}</td>
                     <td>{{ item.quantity }}</td>
                     <td>{{ item.quantity_sold }}</td>
                     <td>{{ item.revenue }}</td>
-                    <td>{{ item.sale_date }}</td>
+                    <td>{{ item.purchase_date }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -83,18 +97,18 @@
             <ul class="pagination">
                 {% if page > 1 %}
                 <li class="page-item">
-                    <a class="page-link" href="/stock/report?page={{ page - 1 }}&page_size={{ page_size }}&start_date={{ start_date }}&end_date={{ end_date }}">Предыдущая</a>
+                    <a class="page-link" href="/stock/report?page={{ page - 1 }}&page_size={{ page_size }}&start_date={{ start_date }}&end_date={{ end_date }}&category_id={{ category_id }}">Предыдущая</a>
                 </li>
                 {% endif %}
                 {% set total_pages = (total / page_size) | int + (1 if total % page_size else 0) %}
                 {% for p in range(1, total_pages + 1) %}
                 <li class="page-item {% if p == page %}active{% endif %}">
-                    <a class="page-link" href="/stock/report?page={{ p }}&page_size={{ page_size }}&start_date={{ start_date }}&end_date={{ end_date }}">{{ p }}</a>
+                    <a class="page-link" href="/stock/report?page={{ p }}&page_size={{ page_size }}&start_date={{ start_date }}&end_date={{ end_date }}&category_id={{ category_id }}">{{ p }}</a>
                 </li>
                 {% endfor %}
                 {% if page < total_pages %}
                 <li class="page-item">
-                    <a class="page-link" href="/stock/report?page={{ page + 1 }}&page_size={{ page_size }}&start_date={{ start_date }}&end_date={{ end_date }}">Следующая</a>
+                    <a class="page-link" href="/stock/report?page={{ page + 1 }}&page_size={{ page_size }}&start_date={{ start_date }}&end_date={{ end_date }}&category_id={{ category_id }}">Следующая</a>
                 </li>
                 {% endif %}
             </ul>

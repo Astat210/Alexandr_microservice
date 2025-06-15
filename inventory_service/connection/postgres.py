@@ -14,22 +14,77 @@ def init_db():
     try:
         with engine.connect() as connection:
             connection.execute(text("""
-                CREATE TABLE IF NOT EXISTS stock (
-                    id SERIAL PRIMARY KEY,
-                    product_id VARCHAR(50) UNIQUE NOT NULL,
-                    product_name VARCHAR(100) NOT NULL,
+                CREATE TABLE IF NOT EXISTS categories (
+                    category_id SERIAL PRIMARY KEY,
+                    name VARCHAR(100) NOT NULL
+                );
+            """))
+            connection.execute(text("""
+                CREATE TABLE IF NOT EXISTS products (
+                    product_id SERIAL PRIMARY KEY,
+                    name VARCHAR(100) NOT NULL,
+                    category_id INTEGER REFERENCES categories(category_id),
+                    price DECIMAL(10, 2) NOT NULL,
+                    unit VARCHAR(10) NOT NULL
+                );
+            """))
+            connection.execute(text("""
+                CREATE TABLE IF NOT EXISTS customers (
+                    customer_id SERIAL PRIMARY KEY,
+                    full_name VARCHAR(100) NOT NULL,
+                    phone VARCHAR(20),
+                    email VARCHAR(100),
+                    registered_at TIMESTAMP NOT NULL
+                );
+            """))
+            connection.execute(text("""
+                CREATE TABLE IF NOT EXISTS suppliers (
+                    supplier_id SERIAL PRIMARY KEY,
+                    name VARCHAR(100) NOT NULL,
+                    contact_email VARCHAR(100),
+                    phone VARCHAR(20)
+                );
+            """))
+            connection.execute(text("""
+                CREATE TABLE IF NOT EXISTS inventory (
+                    inventory_id SERIAL PRIMARY KEY,
+                    product_id INTEGER REFERENCES products(product_id),
                     quantity INTEGER NOT NULL,
                     last_updated TIMESTAMP NOT NULL
                 );
             """))
             connection.execute(text("""
-                CREATE TABLE IF NOT EXISTS sales (
-                    id SERIAL PRIMARY KEY,
-                    product_id VARCHAR(50) NOT NULL,
-                    quantity_sold INTEGER NOT NULL,
-                    sale_date TIMESTAMP NOT NULL,
-                    revenue DECIMAL(10, 2) NOT NULL,
-                    FOREIGN KEY (product_id) REFERENCES stock(product_id)
+                CREATE TABLE IF NOT EXISTS purchases (
+                    purchase_id SERIAL PRIMARY KEY,
+                    customer_id INTEGER REFERENCES customers(customer_id),
+                    purchase_date TIMESTAMP NOT NULL,
+                    total_amount DECIMAL(10, 2) NOT NULL
+                );
+            """))
+            connection.execute(text("""
+                CREATE TABLE IF NOT EXISTS purchase_items (
+                    purchase_item_id SERIAL PRIMARY KEY,
+                    purchase_id INTEGER REFERENCES purchases(purchase_id),
+                    product_id INTEGER REFERENCES products(product_id),
+                    quantity INTEGER NOT NULL,
+                    unit_price DECIMAL(10, 2) NOT NULL,
+                    total_price DECIMAL(10, 2) NOT NULL
+                );
+            """))
+            connection.execute(text("""
+                CREATE TABLE IF NOT EXISTS restocks (
+                    restock_id SERIAL PRIMARY KEY,
+                    supplier_id INTEGER REFERENCES suppliers(supplier_id),
+                    restock_date TIMESTAMP NOT NULL
+                );
+            """))
+            connection.execute(text("""
+                CREATE TABLE IF NOT EXISTS restock_items (
+                    restock_item_id SERIAL PRIMARY KEY,
+                    restock_id INTEGER REFERENCES restocks(restock_id),
+                    product_id INTEGER REFERENCES products(product_id),
+                    quantity INTEGER NOT NULL,
+                    unit_cost DECIMAL(10, 2) NOT NULL
                 );
             """))
             connection.commit()

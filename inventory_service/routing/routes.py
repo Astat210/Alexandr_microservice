@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -20,7 +20,7 @@ async def create_stock(product_id: str, product_name: str, quantity: int, db: Se
         return {"message": "Товар добавлен", "data": stock}
     except Exception as e:
         logging.error(f"Error in create_stock: {str(e)}")
-        raise HTTPException(status_code=400, detail:str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/sales/create")
 async def create_sale(product_id: str, quantity_sold: int, revenue: float, db: Session = Depends(get_db)):
@@ -33,7 +33,7 @@ async def create_sale(product_id: str, quantity_sold: int, revenue: float, db: S
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/stock/report", response_class=HTMLResponse)
-async def get_stock_report(request: fastapi.Request, start_date: str = None, end_date: str = None, page: int = 1, page_size: int = 10, db: Session = Depends(get_db)):
+async def get_stock_report(request: Request, start_date: str = None, end_date: str = None, page: int = 1, page_size: int = 10, db: Session = Depends(get_db)):
     try:
         repo = PostgresRepository(db)
         report = repo.get_stock_report(start_date, end_date, page, page_size)
